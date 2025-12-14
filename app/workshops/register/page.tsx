@@ -6,37 +6,87 @@ import { ArrowLeft, ArrowRight, CheckCircle, Cpu, ShieldCheck } from "lucide-rea
 import Link from "next/link";
 import { WORKSHOP_DATA } from "@/lib/workshop-data";
 
-// --- FORM COMPONENT (Wrapped in Suspense below) ---
+// --- FORM COMPONENT ---
 function RegistrationForm() {
     const searchParams = useSearchParams();
     const router = useRouter();
 
-    // 1. Get the 'id' from the URL (e.g., ?id=WS-2025-01)
+    // 1. Setup State for ALL fields
     const initialId = searchParams.get("id") || "";
-
-    // 2. State for the form
     const [selectedWorkshopId, setSelectedWorkshopId] = useState(initialId);
+
+    const [formData, setFormData] = useState({
+        fullName: "",
+        studentId: "",
+        mobile: "",
+        semester: "",
+        email: "",
+        gsuite: "",
+        facebook: "",
+        robuDept: "",
+        robuDesignation: "",
+        laptop: "",
+        expectations: "",
+        remarks: ""
+    });
+
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
+    const [errorMsg, setErrorMsg] = useState("");
 
-    // Filter only upcoming workshops for the dropdown
     const activeWorkshops = WORKSHOP_DATA.filter(w => w.status === "UPCOMING");
 
-    // Update state if URL changes (optional, but good practice)
     useEffect(() => {
         if (initialId) {
             setSelectedWorkshopId(initialId);
         }
     }, [initialId]);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    // Handle Input Changes
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    // --- SUBMIT HANDLER (REAL API CALL) ---
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
-        // Simulate API Call
-        setTimeout(() => {
+        setErrorMsg("");
+
+        // Find the workshop title based on ID
+        const workshop = activeWorkshops.find(w => w.id === selectedWorkshopId);
+
+        try {
+            const res = await fetch("/api/registrations", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    // Workshop Details
+                    workshopId: selectedWorkshopId,
+                    workshopName: workshop?.title || "Unknown Workshop",
+
+                    // Student Details (Spread form data)
+                    ...formData,
+
+                    // Add timestamp explicitly if needed by client (server adds one too)
+                    clientTimestamp: new Date().toISOString(),
+                })
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                setIsSuccess(true);
+            } else {
+                setErrorMsg(data.error || "Submission failed. Please try again.");
+            }
+        } catch (error) {
+            console.error("Error submitting:", error);
+            setErrorMsg("Network error. Check connection.");
+        } finally {
             setIsSubmitting(false);
-            setIsSuccess(true);
-        }, 1500);
+        }
     };
 
     // --- SUCCESS VIEW ---
@@ -49,15 +99,10 @@ function RegistrationForm() {
                 <h1 className="text-3xl font-bold text-white mb-4 tracking-tight">Registration Confirmed</h1>
                 <p className="text-neutral-400 text-lg max-w-md mx-auto mb-10 leading-relaxed">
                     Your credentials have been verified and added to the roster for the selected module.
-                    <br /><br />
-                    <span className="text-sm font-mono text-neutral-500">CONFIRMATION_PACKET_SENT_TO_EMAIL</span>
                 </p>
                 <div className="flex gap-4">
-                    <button onClick={() => { setIsSuccess(false); router.push('/workshops'); }} className="px-8 py-3 bg-white text-black font-bold uppercase text-xs tracking-wider rounded hover:bg-neutral-200 transition-colors">
+                    <button onClick={() => router.push('/workshops')} className="px-8 py-3 bg-white text-black font-bold uppercase text-xs tracking-wider rounded hover:bg-neutral-200 transition-colors">
                         Return to Base
-                    </button>
-                    <button onClick={() => { setIsSuccess(false); setIsSubmitting(false); }} className="px-8 py-3 border border-white/10 text-white font-bold uppercase text-xs tracking-wider rounded hover:bg-white/5 transition-colors">
-                        Register Another
                     </button>
                 </div>
             </div>
@@ -75,13 +120,19 @@ function RegistrationForm() {
                     Secure Registration Protocol
                 </h1>
                 <p className="text-neutral-400">
-                    Complete the dossier below to secure your seat. All fields marked with * are mandatory for clearance.
+                    Complete the dossier below to secure your seat.
                 </p>
             </div>
 
+            {errorMsg && (
+                <div className="mb-6 p-4 bg-red-950/30 border border-red-500/50 rounded text-red-200 text-sm font-mono">
+                    ERROR: {errorMsg}
+                </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-8">
 
-                {/* 0. WORKSHOP SELECTION (Auto-selected or Manual) */}
+                {/* 0. WORKSHOP SELECTION */}
                 <div className="p-6 bg-blue-900/10 border border-blue-500/30 rounded-xl">
                     <label className="block text-xs font-mono text-blue-400 uppercase tracking-wider mb-2">Target Module (Auto-Detected) *</label>
                     <div className="relative">
@@ -98,27 +149,20 @@ function RegistrationForm() {
                                 </option>
                             ))}
                         </select>
-                        {/* Dropdown Arrow */}
                         <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-blue-500">
                             <Cpu className="w-4 h-4" />
                         </div>
                     </div>
-                    {selectedWorkshopId && (
-                        <div className="mt-2 flex items-center gap-2 text-[10px] text-green-400 font-mono">
-                            <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-                            SLOT AVAILABLE FOR REGISTRATION
-                        </div>
-                    )}
                 </div>
 
                 {/* 1. Identity */}
                 <div className="space-y-4">
                     <div className="flex items-center gap-2 mb-2 pb-1 border-b border-white/5"><span className="text-[10px] font-mono text-blue-500">[01] PERSONAL_IDENTITY</span></div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        <FormInput label="Full Name" placeholder="Ex: Adnan Sami" />
-                        <FormInput label="Student ID" placeholder="Ex: 22101xxx" />
-                        <FormInput label="Mobile No" placeholder="01xxxxxxxxx" type="tel" />
-                        <FormInput label="BracU Semester" placeholder="Ex: Spring 2025" />
+                        <FormInput name="fullName" label="Full Name" placeholder="Ex: Adnan Sami" value={formData.fullName} onChange={handleInputChange} />
+                        <FormInput name="studentId" label="Student ID" placeholder="Ex: 22101xxx" value={formData.studentId} onChange={handleInputChange} />
+                        <FormInput name="mobile" label="Mobile No" placeholder="01xxxxxxxxx" type="tel" value={formData.mobile} onChange={handleInputChange} />
+                        <FormInput name="semester" label="BracU Semester" placeholder="Ex: Spring 2025" value={formData.semester} onChange={handleInputChange} />
                     </div>
                 </div>
 
@@ -126,9 +170,11 @@ function RegistrationForm() {
                 <div className="space-y-4">
                     <div className="flex items-center gap-2 mb-2 pb-1 border-b border-white/5"><span className="text-[10px] font-mono text-blue-500">[02] COMMS_UPLINK</span></div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        <FormInput label="Personal Gmail" placeholder="example@gmail.com" type="email" />
-                        <FormInput label="G-Suite Email" placeholder="id@g.bracu.ac.bd" type="email" />
-                        <div className="col-span-1 md:col-span-2"><FormInput label="Facebook ID Link" placeholder="https://facebook.com/profile..." /></div>
+                        <FormInput name="email" label="Personal Gmail" placeholder="example@gmail.com" type="email" value={formData.email} onChange={handleInputChange} />
+                        <FormInput name="gsuite" label="G-Suite Email" placeholder="id@g.bracu.ac.bd" type="email" value={formData.gsuite} onChange={handleInputChange} />
+                        <div className="col-span-1 md:col-span-2">
+                            <FormInput name="facebook" label="Facebook ID Link" placeholder="https://facebook.com/profile..." value={formData.facebook} onChange={handleInputChange} />
+                        </div>
                     </div>
                 </div>
 
@@ -136,8 +182,20 @@ function RegistrationForm() {
                 <div className="space-y-4">
                     <div className="flex items-center gap-2 mb-2 pb-1 border-b border-white/5"><span className="text-[10px] font-mono text-blue-500">[03] ROBU_CLEARANCE</span></div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        <FormSelect label="ROBU Department" options={["RPM", "SP", "HR", "EM", "IT", "F&M", "A&D", "E&P"]} />
-                        <FormSelect label="ROBU Designation" options={["DADS", "Executive", "Junior Executive", "Apprentice", "General Member", "Probationary Member"]} />
+                        <FormSelect
+                            name="robuDept"
+                            label="ROBU Department"
+                            options={["RPM", "SP", "HR", "EM", "IT", "F&M", "A&D", "E&P"]}
+                            value={formData.robuDept}
+                            onChange={handleInputChange}
+                        />
+                        <FormSelect
+                            name="robuDesignation"
+                            label="ROBU Designation"
+                            options={["DADS", "Executive", "Junior Executive", "Apprentice", "General Member", "Probationary Member"]}
+                            value={formData.robuDesignation}
+                            onChange={handleInputChange}
+                        />
                     </div>
                 </div>
 
@@ -149,24 +207,29 @@ function RegistrationForm() {
                         <label className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider">Do you have a laptop? *</label>
                         <div className="flex gap-4">
                             <label className="flex items-center gap-2 text-xs text-neutral-300 cursor-pointer p-3 border border-white/10 rounded w-full hover:bg-white/5 transition-colors">
-                                <input type="radio" name="laptop" value="yes" required className="accent-blue-500" /> Yes, I will bring it.
+                                <input type="radio" name="laptop" value="Yes" required onChange={handleInputChange} className="accent-blue-500" /> Yes, I will bring it.
                             </label>
                             <label className="flex items-center gap-2 text-xs text-neutral-300 cursor-pointer p-3 border border-white/10 rounded w-full hover:bg-white/5 transition-colors">
-                                <input type="radio" name="laptop" value="no" required className="accent-blue-500" /> No, I don't.
+                                <input type="radio" name="laptop" value="No" required onChange={handleInputChange} className="accent-blue-500" /> No, I don't.
                             </label>
                         </div>
                     </div>
 
                     <div className="space-y-1">
                         <label className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider">Expectations *</label>
-                        <textarea required rows={3} className="w-full bg-[#050505] border border-white/10 rounded px-3 py-2 text-xs text-white placeholder-neutral-700 focus:border-blue-500 focus:outline-none transition-all resize-none" />
+                        <textarea name="expectations" required rows={3} value={formData.expectations} onChange={handleInputChange} className="w-full bg-[#050505] border border-white/10 rounded px-3 py-2 text-xs text-white placeholder-neutral-700 focus:border-blue-500 focus:outline-none transition-all resize-none" />
+                    </div>
+
+                    <div className="space-y-1">
+                        <label className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider">Remarks (Optional)</label>
+                        <textarea name="remarks" rows={2} value={formData.remarks} onChange={handleInputChange} className="w-full bg-[#050505] border border-white/10 rounded px-3 py-2 text-xs text-white placeholder-neutral-700 focus:border-blue-500 focus:outline-none transition-all resize-none" />
                     </div>
                 </div>
 
                 {/* Submit */}
                 <div className="pt-6 border-t border-white/10">
                     <button disabled={isSubmitting} type="submit" className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold uppercase tracking-wider rounded transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed group shadow-[0_0_30px_rgba(37,99,235,0.3)] hover:shadow-[0_0_50px_rgba(37,99,235,0.5)]">
-                        {isSubmitting ? <>Encrypting & Sending <span className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" /></> : <>Initialize Registration <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" /></>}
+                        {isSubmitting ? <>Encrypting Data <span className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" /></> : <>Initialize Registration <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" /></>}
                     </button>
                 </div>
             </form>
@@ -175,18 +238,18 @@ function RegistrationForm() {
 }
 
 // --- HELPER COMPONENTS ---
-const FormInput = ({ label, placeholder, type = "text", required = true }: any) => (
+const FormInput = ({ name, label, placeholder, type = "text", value, onChange, required = true }: any) => (
     <div className="space-y-1">
         <label className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider">{label} {required && "*"}</label>
-        <input required={required} type={type} placeholder={placeholder} className="w-full bg-[#050505] border border-white/10 rounded px-4 py-3 text-sm text-white placeholder-neutral-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-all" />
+        <input required={required} name={name} type={type} placeholder={placeholder} value={value} onChange={onChange} className="w-full bg-[#050505] border border-white/10 rounded px-4 py-3 text-sm text-white placeholder-neutral-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-all" />
     </div>
 );
 
-const FormSelect = ({ label, options }: any) => (
+const FormSelect = ({ name, label, options, value, onChange }: any) => (
     <div className="space-y-1">
         <label className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider">{label} *</label>
         <div className="relative">
-            <select required defaultValue="" className="w-full appearance-none bg-[#050505] border border-white/10 rounded px-4 py-3 text-sm text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-all cursor-pointer">
+            <select required name={name} value={value} onChange={onChange} className="w-full appearance-none bg-[#050505] border border-white/10 rounded px-4 py-3 text-sm text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none transition-all cursor-pointer">
                 <option value="" disabled>Select Option</option>
                 {options.map((opt: string) => <option key={opt} value={opt}>{opt}</option>)}
             </select>
@@ -197,19 +260,17 @@ const FormSelect = ({ label, options }: any) => (
     </div>
 );
 
-// --- MAIN PAGE COMPONENT ---
+// --- MAIN PAGE ---
 export default function RegistrationPage() {
     return (
         <main className="min-h-screen bg-[#050505] text-white pt-24 pb-20 selection:bg-blue-500/30">
             <div className="fixed inset-0 opacity-[0.03] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
 
             <div className="max-w-7xl mx-auto px-4 relative z-10">
-                {/* Breadcrumb */}
                 <Link href="/workshops" className="inline-flex items-center gap-2 text-xs font-mono text-neutral-500 hover:text-blue-400 transition-colors uppercase tracking-wider mb-8">
                     <ArrowLeft className="w-3 h-3" /> Abort / Return to List
                 </Link>
 
-                {/* Suspense Wrapper is crucial for useSearchParams */}
                 <Suspense fallback={<div className="text-center text-neutral-500 font-mono py-20">INITIALIZING FORM PROTOCOLS...</div>}>
                     <RegistrationForm />
                 </Suspense>
