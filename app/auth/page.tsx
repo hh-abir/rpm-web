@@ -34,7 +34,7 @@ export default function AuthPage() {
                     password,
                 }, {
                     onSuccess: () => {
-                        router.push("/"); // Redirect to home
+                        router.push("/dashboard"); // <--- CHANGED THIS
                     },
                     onError: (ctx) => {
                         setError(ctx.error.message);
@@ -42,6 +42,7 @@ export default function AuthPage() {
                     }
                 });
             } else {
+                // --- SIGN UP LOGIC ---
                 await authClient.signUp.email({
                     email,
                     password,
@@ -49,9 +50,9 @@ export default function AuthPage() {
                     designation,
                     studentId,
                     phoneNumber: phone,
-                } as any, {
+                } as any, { // Added 'as any' to fix the TS error
                     onSuccess: () => {
-                        router.push("/");
+                        router.push("/dashboard"); // <--- CHANGED THIS
                     },
                     onError: (ctx) => {
                         setError(ctx.error.message);
