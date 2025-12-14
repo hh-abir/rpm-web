@@ -7,17 +7,17 @@ import Image from "next/image";
 
 // --- YOUR DATA HERE ---
 const DEV_INFO = {
-    name: "Your Name", // REPLACE THIS
+    name: "Hasib Hossain Abir", // REPLACE THIS
     roles: ["Full-Stack Dev", "Backend Architect"],
-    robu_dept: "RPM Division",
+    robu_dept: "RPM Dept (Robu)",
     varsity_dept: "Dept. of CSE, BRAC University",
     image: "https://github.com/shadcn.png",
     links: {
-        github: "https://github.com/yourusername",
+        github: "https://github.com/hh-abir",
         portfolio: "https://yourportfolio.com",
-        facebook: "https://facebook.com/yourprofile",
-        linkedin: "https://linkedin.com/in/yourprofile",
-        email: "your.email@bracu.ac.bd" // Just the email string for display
+        facebook: "https://www.facebook.com/hasibhossain.abir.7/",
+        linkedin: "https://linkedin.com/in/abir4dev",
+        email: "abir4dev@gmail.com"
     }
 };
 
