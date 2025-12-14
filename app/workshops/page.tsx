@@ -66,7 +66,6 @@ export default function WorkshopsPage() {
                             <ActiveWorkshopCard
                                 key={workshop.id}
                                 workshop={workshop}
-                                onRegister={() => setSelectedWorkshop(workshop)}
                             />
                         ))}
                     </div>
