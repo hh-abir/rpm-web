@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google"; // Assuming you use these fonts
+import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
-import Navbar from "@/components/layout/Navbar"; // <--- Import it
+// CHANGE THIS IMPORT:
+import NavbarWrapper from "@/components/layout/NavbarWrapper";
 
-// Font setup (just an example, keep yours if different)
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 const jetbrains = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
@@ -21,8 +21,8 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${inter.variable} ${jetbrains.variable} font-sans bg-black text-white antialiased`}>
 
-        {/* Navbar goes here, above children */}
-        <Navbar />
+        {/* REPLACED <Navbar /> with this: */}
+        <NavbarWrapper />
 
         {children}
 
