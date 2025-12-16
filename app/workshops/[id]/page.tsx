@@ -4,8 +4,8 @@ import React, { use, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Calendar, Clock, MapPin, Users, CheckCircle, Terminal, User, BookOpen, Cpu, ArrowRight, X } from "lucide-react";
-import { WORKSHOP_DATA, Workshop } from "@/lib/workshop-data";
+import { ArrowLeft, Calendar, Clock, MapPin, Users, CheckCircle, Terminal, User, ArrowRight, X } from "lucide-react";
+import { WORKSHOP_DATA } from "@/lib/workshop-data";
 import RegistrationModal from "@/components/workshops/RegistrationModal";
 
 // Helper for dynamic params in Next.js 14/15
@@ -17,6 +17,10 @@ export default function WorkshopDetailsPage({ params }: { params: Promise<{ id: 
     if (!workshop) {
         notFound();
     }
+
+    // Fallback: If data still has old 'instructor' object, wrap it in an array for the loop
+    // @ts-ignore
+    const instructorsList = workshop.instructors || (workshop.instructor ? [workshop.instructor] : []);
 
     return (
         <main className="min-h-screen bg-[#050505] text-white pt-24 pb-20 relative selection:bg-blue-500/30">
@@ -67,10 +71,14 @@ export default function WorkshopDetailsPage({ params }: { params: Promise<{ id: 
                         </div>
                     </div>
 
-                    {/* Right: Quick Status Card */}
-                    <div className="hidden lg:block relative h-48 rounded-xl overflow-hidden border border-white/10 group">
-                        <Image src={workshop.image} alt={workshop.title} fill className="object-cover grayscale group-hover:grayscale-0 transition-all duration-700" />
-                        <div className="absolute inset-0 bg-blue-900/20 mix-blend-overlay" />
+                    {/* Changed h-48 to aspect-video (16:9) and object-cover to object-contain */}
+                    <div className="hidden lg:block relative w-full h-[400px] aspect-video rounded-xl overflow-hidden border border-white/10 bg-neutral-900/50 group">
+                        <Image
+                            src={workshop.image}
+                            alt={workshop.title}
+                            fill
+                            className="object-contain"
+                        />
                     </div>
                 </div>
 
@@ -133,9 +141,9 @@ export default function WorkshopDetailsPage({ params }: { params: Promise<{ id: 
                     <div className="space-y-6">
 
                         {/* Action Card */}
-                        <div className="bg-[#0a0a0a] border border-white/10 rounded-xl p-6 top-24 shadow-2xl shadow-black/50">
+                        <div className="bg-[#0a0a0a] border border-white/10 rounded-xl p-6 top-24 shadow-2xl shadow-black/50 z-20">
 
-                            {/* Price Section - Stacked Vertically */}
+                            {/* Price Section */}
                             <div className="mb-6 pb-6 border-b border-white/5">
                                 <span className="block text-[10px] font-mono text-neutral-500 uppercase tracking-widest mb-2">
                                     Registration Fee
@@ -161,7 +169,7 @@ export default function WorkshopDetailsPage({ params }: { params: Promise<{ id: 
                                     href={`/workshops/register?id=${workshop.id}`}
                                     className="group w-full py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold uppercase tracking-wider rounded transition-all flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(37,99,235,0.3)] hover:shadow-[0_0_30px_rgba(37,99,235,0.5)]"
                                 >
-                                    <span>Initialize Protocol</span>
+                                    <span>Register</span>
                                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                                 </Link>
                             ) : (
@@ -177,23 +185,28 @@ export default function WorkshopDetailsPage({ params }: { params: Promise<{ id: 
                             </div>
                         </div>
 
-                        {/* Instructor Card */}
-                        <div className="bg-[#0a0a0a] border border-white/10 rounded-xl p-6">
-                            <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
-                                <User className="w-4 h-4 text-blue-500" /> Instructor
+                        {/* Instructors Section (UPDATED FOR MULTIPLE) */}
+                        <div className="space-y-4">
+                            <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                                <User className="w-4 h-4 text-blue-500" /> Instructors
                             </h4>
-                            <div className="flex items-center gap-4 mb-4">
-                                <div className="relative w-12 h-12 rounded-full overflow-hidden border border-white/20">
-                                    <Image src={workshop.instructor.image} alt={workshop.instructor.name} fill className="object-cover" />
+
+                            {instructorsList.map((inst: any, idx: number) => (
+                                <div key={idx} className="bg-[#0a0a0a] border border-white/10 rounded-xl p-6">
+                                    <div className="flex items-center gap-4 mb-4">
+                                        <div className="relative w-12 h-12 rounded-full overflow-hidden border border-white/20">
+                                            <Image src={inst.image} alt={inst.name} fill className="object-cover" />
+                                        </div>
+                                        <div>
+                                            <div className="text-sm font-bold text-white">{inst.name}</div>
+                                            <div className="text-xs text-blue-400 font-mono">{inst.role}</div>
+                                        </div>
+                                    </div>
+                                    <p className="text-xs text-neutral-500 leading-relaxed italic">
+                                        "{inst.bio}"
+                                    </p>
                                 </div>
-                                <div>
-                                    <div className="text-sm font-bold text-white">{workshop.instructor.name}</div>
-                                    <div className="text-xs text-blue-400 font-mono">{workshop.instructor.role}</div>
-                                </div>
-                            </div>
-                            <p className="text-xs text-neutral-500 leading-relaxed italic">
-                                "{workshop.instructor.bio}"
-                            </p>
+                            ))}
                         </div>
 
                     </div>

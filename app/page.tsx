@@ -13,11 +13,11 @@ export default function Home() {
       {/* Navbar would go here */}
       <HeroSection />
       <MissionSection />
-      <TracksSection />
-      <ImpactSection />
-      <FeaturedProjectsSection />
+      {/* <TracksSection /> */}
+      {/* <ImpactSection /> */}
+      {/* <FeaturedProjectsSection /> */}
       <CouncilSection />
-      <IntelligenceSection />
+      {/* <IntelligenceSection /> */}
       <Footer />
     </main>
   );
