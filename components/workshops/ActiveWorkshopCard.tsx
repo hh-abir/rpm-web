@@ -18,6 +18,7 @@ export default function ActiveWorkshopCard({ workshop }: { workshop: Workshop })
             {/* 1. IMAGE HEADER (Clickable -> Goes to Details) */}
             <Link href={`/workshops/${workshop.id}`} className="relative h-48 w-full overflow-hidden shrink-0 cursor-pointer">
                 <Image
+                    unoptimized
                     src={workshop.image}
                     alt={workshop.title}
                     fill
@@ -77,7 +78,7 @@ export default function ActiveWorkshopCard({ workshop }: { workshop: Workshop })
                         href={`/workshops/${workshop.id}`}
                         className="flex items-center justify-center gap-2 py-2.5 bg-white/5 border border-white/10 text-white text-xs font-bold uppercase tracking-wider rounded hover:bg-white/10 transition-colors"
                     >
-                        View Intel
+                        View Details
                     </Link>
 
                     {/* Register Button (Links to Registration Page with ID param) */}
@@ -85,7 +86,7 @@ export default function ActiveWorkshopCard({ workshop }: { workshop: Workshop })
                         href={`/workshops/register?id=${workshop.id}`}
                         className="flex items-center justify-center gap-2 py-2.5 bg-white text-black text-xs font-bold uppercase tracking-wider rounded hover:bg-blue-500 hover:text-white transition-all duration-300"
                     >
-                        Initialize <ArrowRight className="w-3 h-3" />
+                        Register <ArrowRight className="w-3 h-3" />
                     </Link>
                 </div>
             </div>
